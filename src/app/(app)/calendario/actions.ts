@@ -6,6 +6,8 @@ import { z } from "zod"
 import { ActionError, dbError, guardRotation, runAction, validateForm } from "@/lib/actions/server"
 import type { ActionState } from "@/lib/actions/state"
 import { fromISODate, toISODate } from "@/lib/domain/dates"
+import { normalizeName } from "@/lib/domain/phone"
+import type { createClient } from "@/lib/supabase/server"
 import { formToObject } from "@/lib/validation/fields"
 import { requiresPreacher, serviceSchema, serviceStatuses } from "@/lib/validation/service"
 import type { Database, ServiceRow, ServiceStatus } from "@/types/database"
@@ -25,13 +27,38 @@ function statusTimestamps(next: ServiceStatus, previous?: Pick<ServiceRow, "stat
   return patch
 }
 
+type Client = Awaited<ReturnType<typeof createClient>>
+
+async function findOrCreatePreacher(supabase: Client, name: string, church: string | null): Promise<string> {
+  const { data: existing, error } = await supabase.from("preachers").select("id, full_name, nickname, archived_at")
+  if (error) throw dbError(error)
+  const target = normalizeName(name)
+  const match = (existing ?? []).find(
+    (p) => !p.archived_at && (normalizeName(p.full_name) === target || (p.nickname && normalizeName(p.nickname) === target))
+  )
+  if (match) return match.id
+
+  const { data: created, error: insertError } = await supabase
+    .from("preachers")
+    .insert({ full_name: name.trim(), home_church: church })
+    .select("id")
+    .single()
+  if (insertError) throw dbError(insertError)
+  return created.id
+}
+
 export async function saveService(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = validateForm(serviceSchema, formToObject(formData))
   if (!parsed.ok) return parsed.state
-  const { id, service_date, period, title, ...values } = parsed.data
+  const { id, service_date, period, title, new_preacher_name, new_preacher_church, ...values } = parsed.data
   const confirmedRotation = formData.get("confirm_rotation") === "on"
 
   return runAction(id ? "Culto atualizado." : "Culto extraordinário criado.", async (supabase) => {
+    // Pregador digitado na hora: reaproveita o cadastro de mesmo nome/apelido ou cria um novo.
+    if (new_preacher_name) {
+      values.preacher_id = await findOrCreatePreacher(supabase, new_preacher_name, new_preacher_church)
+    }
+
     if (!id) {
       if (values.preacher_id && (values.status === "convidado" || values.status === "confirmado")) {
         await guardRotation(supabase, {

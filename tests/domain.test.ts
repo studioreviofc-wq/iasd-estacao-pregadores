@@ -8,6 +8,7 @@ import { availabilityCovers, availablePreacherIds } from "../src/lib/domain/avai
 import { availableDaysLabel } from "../src/lib/domain/availability-format"
 import { availabilityRows, contactSchema } from "../src/lib/validation/contact"
 import { toCsv, brDate } from "../src/lib/export/csv"
+import { serviceSchema } from "../src/lib/validation/service"
 import { assessRotation, suggestPreachers, type RotationSnapshot } from "../src/lib/domain/rotation"
 let fail = 0
 const eq = (a: unknown, b: unknown, m: string) => { const ok = JSON.stringify(a) === JSON.stringify(b); if (!ok) fail++; console.log(ok ? "  ✓" : "  ✗", m, ok ? "" : `(obtido ${JSON.stringify(a)})`) }
@@ -94,6 +95,14 @@ eq(suggestPreachers(people, avs, day)[0].reasons[0], "Informou disponibilidade p
 // CSV
 const csv = toCsv([{ n: "José; \"Zé\"", d: "2026-12-05" }], [{ header: "Nome", value: (r) => r.n }, { header: "Data", value: (r) => brDate(r.d) }])
 eq(csv, '\uFEFFNome;Data\r\n"José; ""Zé""";05/12/2026\r\n', "CSV com BOM, ponto e vírgula e aspas escapadas")
+
+// Pregador digitado direto no culto (sem cadastro prévio)
+const svcId = "3f2b8c1e-4d5a-4b6c-9e7f-1a2b3c4d5e70"
+const typed = serviceSchema.safeParse({ id: svcId, status: "confirmado", preacher_id: "none", new_preacher_name: "Teté", new_preacher_church: "Central" })
+eq(typed.success && [typed.data.new_preacher_name, typed.data.status], ["Teté", "confirmado"], "culto aceita pregador digitado com status confirmado")
+const typedOpen = serviceSchema.safeParse({ id: svcId, status: "aberto", preacher_id: "none", new_preacher_name: "Elionai" })
+eq(typedOpen.success && typedOpen.data.status, "convidado", "nome digitado numa vaga em aberto vira aguardando confirmação")
+eq(serviceSchema.safeParse({ id: svcId, status: "confirmado", preacher_id: "none" }).success, false, "confirmado sem pregador continua bloqueado")
 
 console.log(fail ? "FALHOU" : "Todos os testes passaram.")
 process.exitCode = fail ? 1 : 0

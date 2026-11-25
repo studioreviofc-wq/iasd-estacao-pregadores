@@ -69,6 +69,8 @@ export function ServiceForm({
   const [date, setDate] = useState(service?.service_date ?? defaultDate ?? "")
   const [period, setPeriod] = useState<string>(service?.period ?? "noite")
   const [preacherId, setPreacherId] = useState(service?.preacher_id ?? "none")
+  // Pregador ainda não cadastrado: digita o nome e ele é cadastrado ao salvar.
+  const [typingNew, setTypingNew] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [rotation, setRotation] = useState<RotationContext | null>(null)
   const [loadingRotation, startRotation] = useTransition()
@@ -166,21 +168,52 @@ export function ServiceForm({
           error={fieldError("preacher_id")}
           hint={availableCount > 0 ? `${availableCount} com disponibilidade nesta data` : undefined}
         >
-          <SelectField
-            id="preacher_id"
-            name="preacher_id"
-            options={preacherOptions}
-            value={preacherId}
-            onValueChange={setPreacherId}
-            invalid={Boolean(fieldError("preacher_id"))}
-          />
+          {typingNew ? (
+            <>
+              <input type="hidden" name="preacher_id" value="none" />
+              <Input
+                id="new_preacher_name"
+                name="new_preacher_name"
+                placeholder="Nome ou apelido do pregador"
+                autoFocus
+                autoComplete="off"
+                aria-invalid={Boolean(fieldError("preacher_id")) || undefined}
+              />
+            </>
+          ) : (
+            <SelectField
+              id="preacher_id"
+              name="preacher_id"
+              options={preacherOptions}
+              value={preacherId}
+              onValueChange={setPreacherId}
+              invalid={Boolean(fieldError("preacher_id"))}
+            />
+          )}
+          <button
+            type="button"
+            className="text-xs font-medium text-primary hover:underline"
+            onClick={() => setTypingNew((v) => !v)}
+          >
+            {typingNew ? "Escolher da lista de pregadores" : "Não está na lista? Digitar o nome"}
+          </button>
         </Field>
         <Field label="Status" htmlFor="status" required error={fieldError("status")}>
           <SelectField id="status" name="status" options={statusOptions} defaultValue={service?.status ?? "aberto"} />
         </Field>
       </div>
 
-      {selected && preacherId !== "none" ? <RotationStatus assessment={selected.assessment} /> : null}
+      {typingNew ? (
+        <Field
+          label="Igreja do pregador"
+          htmlFor="new_preacher_church"
+          hint="Opcional. O pregador é cadastrado automaticamente ao salvar — telefone e apelido você completa depois em Pregadores."
+        >
+          <Input id="new_preacher_church" name="new_preacher_church" placeholder="Ex.: Central, Lagarto 3" autoComplete="off" />
+        </Field>
+      ) : null}
+
+      {!typingNew && selected && preacherId !== "none" ? <RotationStatus assessment={selected.assessment} /> : null}
       {serverRotation ? <RotationConfirm rotation={serverRotation} onConfirm={confirmRotation} pending={pending} /> : null}
 
       {date ? (
@@ -189,8 +222,11 @@ export function ServiceForm({
           loading={loadingRotation}
           ready={rotation !== null}
           error={rotation?.error}
-          selectedId={preacherId}
-          onPick={setPreacherId}
+          selectedId={typingNew ? "" : preacherId}
+          onPick={(id) => {
+            setTypingNew(false)
+            setPreacherId(id)
+          }}
         />
       ) : null}
 

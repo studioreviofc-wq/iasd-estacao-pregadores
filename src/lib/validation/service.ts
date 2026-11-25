@@ -25,6 +25,9 @@ export const serviceSchema = z
     title: optionalText(120),
     start_time: optionalTime,
     preacher_id: optionalId,
+    /** Pregador ainda não cadastrado: é criado (ou reaproveitado pelo nome) ao salvar o culto. */
+    new_preacher_name: optionalText(120),
+    new_preacher_church: optionalText(120),
     status: z.enum(serviceStatuses, { error: "Selecione o status." }),
     sermon_title: optionalText(200),
     bible_reference: optionalText(120),
@@ -32,11 +35,11 @@ export const serviceSchema = z
   })
   .transform((v) =>
     // Escolher um pregador numa vaga em aberto equivale a convidá-lo.
-    v.status === "aberto" && v.preacher_id ? { ...v, status: "convidado" as const } : v
+    v.status === "aberto" && (v.preacher_id || v.new_preacher_name) ? { ...v, status: "convidado" as const } : v
   )
   .superRefine((v, ctx) => {
-    if (requiresPreacher(v.status) && !v.preacher_id) {
-      ctx.addIssue({ code: "custom", path: ["preacher_id"], message: "Selecione o pregador para este status." })
+    if (requiresPreacher(v.status) && !v.preacher_id && !v.new_preacher_name) {
+      ctx.addIssue({ code: "custom", path: ["preacher_id"], message: "Selecione ou digite o pregador para este status." })
     }
     if (!v.id) {
       if (!v.service_date) ctx.addIssue({ code: "custom", path: ["service_date"], message: "Informe a data." })
