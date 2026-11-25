@@ -6,15 +6,6 @@ import { checkbox, email, optionalId, optionalText, requiredText } from "./field
 
 export const preacherCategories = ["pastor", "anciao", "diacono", "membro", "convidado", "outro"] as const
 
-const requiredPhone = z
-  .string({ error: "Informe o telefone com DDD." })
-  .trim()
-  .superRefine((v, ctx) => {
-    const error = validateBrPhone(v)
-    if (error) ctx.addIssue({ code: "custom", message: error })
-  })
-  .transform((v) => formatBrPhone(v))
-
 const optionalPhone = z
   .string()
   .trim()
@@ -28,8 +19,9 @@ const optionalPhone = z
 
 export const preacherSchema = z.object({
   id: optionalId,
-  full_name: requiredText("o nome completo", 120).refine((v) => v.split(/\s+/).length >= 2, "Informe nome e sobrenome."),
-  phone: requiredPhone,
+  full_name: requiredText("o nome", 120).refine((v) => v.length >= 2, "Informe o nome."),
+  nickname: optionalText(60),
+  phone: optionalPhone,
   whatsapp: optionalPhone,
   email: email,
   category: z.enum(preacherCategories, { error: "Selecione a função." }),

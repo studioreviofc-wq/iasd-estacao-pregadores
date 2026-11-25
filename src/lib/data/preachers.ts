@@ -23,7 +23,7 @@ export async function listPreacherOverview() {
 
 export type PreacherOption = Pick<
   PreacherRow,
-  "id" | "full_name" | "category" | "is_active" | "archived_at" | "preferred_weekdays"
+  "id" | "full_name" | "nickname" | "home_church" | "category" | "is_active" | "archived_at" | "preferred_weekdays"
 >
 
 /** Lista enxuta para selects (inclui inativos/arquivados para exibir registros antigos). */
@@ -31,7 +31,7 @@ export async function listPreacherOptions() {
   return query<PreacherOption[]>([], async (supabase) => {
     const res = await supabase
       .from("preachers")
-      .select("id, full_name, category, is_active, archived_at, preferred_weekdays")
+      .select("id, full_name, nickname, home_church, category, is_active, archived_at, preferred_weekdays")
       .order("full_name")
     return unwrap(res, [])
   })

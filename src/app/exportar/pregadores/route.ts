@@ -14,6 +14,7 @@ export async function GET() {
 
   const csv = toCsv(data ?? [], [
     { header: "Nome", value: (p) => p.full_name },
+    { header: "Apelido", value: (p) => p.nickname },
     { header: "Telefone", value: (p) => p.phone },
     { header: "WhatsApp", value: (p) => p.whatsapp },
     { header: "E-mail", value: (p) => p.email },

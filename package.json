@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test:db": "node supabase/tests/db.test.mjs",
     "test:unit": "tsx tests/domain.test.ts",
-    "test": "npm run test:unit && npm run test:db"
+    "test": "npm run test:unit && npm run test:db",
+    "db:setup-sql": "node scripts/build-setup-sql.mjs"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.9.1",

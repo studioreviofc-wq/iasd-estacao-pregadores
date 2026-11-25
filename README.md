@@ -52,14 +52,18 @@ Arquivos `.env*` são ignorados pelo Git (exceto `.env.example`).
 ## Configuração do Supabase
 
 1. **Criar o projeto** em [supabase.com](https://supabase.com) (região São Paulo recomendada).
-2. **Aplicar as migrações, em ordem** — escolha uma forma:
-   - **SQL Editor:** cole e execute, um por vez e nesta ordem, os arquivos de `supabase/migrations/`:
+2. **Instalar o banco** — escolha uma forma:
+   - **Mais simples (recomendado):** no **SQL Editor**, cole todo o arquivo **`supabase/setup.sql`** e clique em *Run*
+     (uma única vez, num projeto novo). Ele contém todas as migrações abaixo, em ordem.
+     Para regenerá-lo após mudar migrações: `npm run db:setup-sql`.
+   - **SQL Editor, arquivo por arquivo:** execute, nesta ordem, os arquivos de `supabase/migrations/`:
      1. `20261124000000_initial_schema.sql` — tabelas, enums, RLS base
      2. `20261124000001_profiles_email.sql` — e-mail no perfil
      3. `20261125000000_regular_schedule.sql` — períodos, faixa do calendário, **gera os 169 cultos de dez/2026 a dez/2027**
      4. `20261126000000_preacher_registry.sql` — telefone normalizado, arquivamento, eventos, `preacher_overview`
      5. `20261127000000_contacts_availability.sql` — status de contato, disponibilidades por mês, sincronização com a escala
      6. `20261128000000_rotation_security_audit.sql` — rotatividade, conflitos, aprovação de usuários, auditoria
+     7. `20261129000000_simple_registry.sql` — apelido e telefone opcional (cadastro simplificado)
    - **CLI:** `npx supabase login`, `npx supabase link --project-ref <ref>` e `npx supabase db push`.
 3. **Autenticação** (Authentication → Sign In / Providers):
    - Mantenha **Email** habilitado.
@@ -163,7 +167,7 @@ Recomenda-se também ativar os **backups automáticos do Supabase** (planos pago
 
 Itens que dependem de ações fora do código:
 
-1. **Criar o projeto Supabase**, aplicar as 6 migrações e configurar a autenticação (seção *Configuração do Supabase*).
+1. **Criar o projeto Supabase**, colar `supabase/setup.sql` e configurar a autenticação (seção *Configuração do Supabase*).
 2. **Criar o primeiro administrador** e liberar os demais usuários.
 3. **Preencher `.env.local`** (desenvolvimento) e as variáveis na hospedagem (produção).
 4. **Logotipo oficial**: salvar em `public/brand/` (SVG para a tela e **PNG** para o PDF) e definir `logoSrc` e
@@ -284,12 +288,13 @@ O gerador de PDF não lê SVG: para o logotipo oficial no PDF, salve um PNG em `
 
 ### Pregadores
 
-**Cadastro** (`/pregadores`): nome completo e telefone com DDD obrigatórios; função, cargo, igreja de origem,
-e-mail, WhatsApp alternativo, dias de preferência, observações e situação opcionais.
+**Cadastro** (`/pregadores`): só o **nome** é obrigatório (pode ser o primeiro nome). Em destaque: **apelido**,
+**igreja de origem** e **telefone** (opcional, validado quando informado). Em “Mais informações”: função, cargo,
+WhatsApp alternativo, e-mail e dias de preferência. Observações e situação ficam sempre visíveis.
 
 | Regra | Como funciona |
 | --- | --- |
-| Telefone | validado no app (`lib/domain/phone.ts`: DDD existente, celular com 9) e normalizado no banco (`normalize_br_phone`) para `phone_normalized` — remove máscara, `+55` e zero de operadora |
+| Telefone | opcional; quando informado, validado no app (`lib/domain/phone.ts`: DDD existente, celular com 9) e normalizado no banco (`normalize_br_phone`) para `phone_normalized` — remove máscara, `+55` e zero de operadora |
 | Duplicados | ao preencher e ao salvar, compara telefone normalizado, nome sem acentos e primeiro + último nome (inclusive arquivados). O salvamento pede confirmação “É outra pessoa — salvar mesmo assim” |
 | Situação | **Ativo** (pode ser escalado), **Inativo** (pausa temporária), **Arquivado** (sai das listas e da escala; histórico intacto; pode ser restaurado) |
 | Exclusão | só para cadastros sem nenhum histórico. As chaves estrangeiras usam `on delete restrict` — o banco impede apagar quem tem cultos, convites, disponibilidades ou eventos |

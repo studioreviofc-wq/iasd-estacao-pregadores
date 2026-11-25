@@ -19,6 +19,7 @@ import type { AvailabilityWindow } from "@/lib/data/availabilities"
 import type { PreacherOption } from "@/lib/data/preachers"
 import type { ServiceWithPreacher } from "@/lib/data/types"
 import { availablePreacherIds } from "@/lib/domain/availability"
+import { preacherDisplayName } from "@/lib/domain/preacher-name"
 import { suggestPreachers } from "@/lib/domain/rotation"
 import { capitalize, formatDate } from "@/lib/domain/dates"
 import { preacherCategoryLabel, serviceName, servicePeriodLabel, serviceStatusMeta } from "@/lib/domain/labels"
@@ -86,7 +87,9 @@ export function ServiceForm({
     if (!rotation || !date) return []
     const byId = new Map(rotation.snapshots.map((s) => [s.preacher_id, s]))
     return suggestPreachers(
-      preachers.filter((p) => !p.archived_at).map((p) => ({ preacher: p, snapshot: byId.get(p.id) })),
+      preachers
+        .filter((p) => !p.archived_at)
+        .map((p) => ({ preacher: { ...p, full_name: preacherDisplayName(p) }, snapshot: byId.get(p.id) })),
       availability,
       date,
       rotation.settings
@@ -106,7 +109,7 @@ export function ServiceForm({
     const visible = preachers.filter((p) => p.is_active || p.id === service?.preacher_id)
     // Garante o pregador atual mesmo que não esteja na lista carregada.
     if (service?.preacher && !visible.some((p) => p.id === service.preacher!.id)) {
-      visible.push({ ...service.preacher, is_active: false, archived_at: null, preferred_weekdays: [] })
+      visible.push({ ...service.preacher, nickname: null, home_church: null, is_active: false, archived_at: null, preferred_weekdays: [] })
     }
     const sorted = [...visible].sort(
       (a, b) => Number(available.has(b.id)) - Number(available.has(a.id)) || a.full_name.localeCompare(b.full_name)
@@ -115,8 +118,8 @@ export function ServiceForm({
       { value: "none", label: "Sem pregador (em aberto)" },
       ...sorted.map((p) => ({
         value: p.id,
-        label: p.full_name,
-        hint: available.has(p.id) ? "· disponível" : `· ${preacherCategoryLabel[p.category]}`,
+        label: preacherDisplayName(p),
+        hint: available.has(p.id) ? "· disponível" : p.home_church ? `· ${p.home_church}` : `· ${preacherCategoryLabel[p.category]}`,
       })),
     ]
   }, [preachers, availability, date, service])

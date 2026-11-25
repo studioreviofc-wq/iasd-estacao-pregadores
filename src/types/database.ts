@@ -67,6 +67,8 @@ export type PreacherRow = Timestamps & {
   notes: string | null
   is_active: boolean
   role_title: string | null
+  /** Como a pessoa é conhecida (ex.: "Teté", "Luizinho"). */
+  nickname: string | null
   /** Dias da semana preferidos (0 = domingo … 6 = sábado). */
   preferred_weekdays: number[]
   /** DDD + número (10/11 dígitos), calculado pelo banco. */

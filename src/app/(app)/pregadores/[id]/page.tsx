@@ -22,6 +22,7 @@ import { availableDaysLabel } from "@/lib/domain/availability-format"
 import { capitalize, formatDate, todayISO } from "@/lib/domain/dates"
 import { availabilityStatusMeta, preacherCategoryLabel } from "@/lib/domain/labels"
 import { formatBrPhone } from "@/lib/domain/phone"
+import { preacherDisplayName } from "@/lib/domain/preacher-name"
 import { availabilityLabel, timeSince } from "@/lib/domain/preacher-stats"
 import { buildTimeline } from "@/lib/domain/timeline"
 import { weekdaysLabel } from "@/lib/domain/weekdays"
@@ -79,7 +80,7 @@ async function Profile({ params }: { params: PageProps<"/pregadores/[id]">["para
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight">{p.full_name}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{preacherDisplayName(p)}</h1>
             {p.archived_at ? (
               <StatusBadge tone="neutral" label="Arquivado" />
             ) : (
@@ -124,6 +125,7 @@ async function Profile({ params }: { params: PageProps<"/pregadores/[id]">["para
         <div className="flex flex-col gap-6">
           <SectionCard title="Dados do pregador">
             <dl className="divide-y divide-border">
+              <Info label="Apelido" value={p.nickname} />
               <Info label="Telefone" value={p.phone ? formatBrPhone(p.phone) : null} />
               {p.whatsapp ? <Info label="WhatsApp" value={formatBrPhone(p.whatsapp)} /> : null}
               <Info label="E-mail" value={p.email} />

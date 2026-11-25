@@ -89,24 +89,31 @@ export function PreacherForm({ preacher, onDone }: { preacher?: PreacherRow; onD
       <input ref={confirmRef} type="hidden" name="confirm_duplicate" defaultValue="" />
       {serverDuplicates?.length ? null : <FormAlert state={state} />}
 
-      <Field label="Nome completo" htmlFor="full_name" required error={fieldError("full_name")}>
-        <Input
-          id="full_name"
-          name="full_name"
-          defaultValue={preacher?.full_name}
-          autoFocus
-          autoComplete="off"
-          onBlur={() => void lookup()}
-        />
-      </Field>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Nome" htmlFor="full_name" required error={fieldError("full_name")} hint="Pode ser só o primeiro nome.">
+          <Input
+            id="full_name"
+            name="full_name"
+            defaultValue={preacher?.full_name}
+            autoFocus
+            autoComplete="off"
+            onBlur={() => void lookup()}
+          />
+        </Field>
+        <Field label="Apelido" htmlFor="nickname" error={fieldError("nickname")} hint="Como é conhecido(a). Ex.: Teté">
+          <Input id="nickname" name="nickname" defaultValue={preacher?.nickname ?? ""} autoComplete="off" />
+        </Field>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Igreja de origem" htmlFor="home_church" error={fieldError("home_church")}>
+          <Input id="home_church" name="home_church" defaultValue={preacher?.home_church ?? ""} placeholder="Ex.: Central, Lagarto 3" />
+        </Field>
         <Field
           label="Telefone com DDD"
           htmlFor="phone"
-          required
           error={fieldError("phone") ?? phoneError ?? undefined}
-          hint="Ex.: (82) 99999-9999"
+          hint="Opcional. Ex.: (82) 99999-9999"
         >
           <Input
             id="phone"
@@ -119,9 +126,6 @@ export function PreacherForm({ preacher, onDone }: { preacher?: PreacherRow; onD
             onBlur={onPhoneBlur}
           />
         </Field>
-        <Field label="WhatsApp (se for outro número)" htmlFor="whatsapp" error={fieldError("whatsapp")}>
-          <Input id="whatsapp" name="whatsapp" type="tel" inputMode="tel" defaultValue={preacher?.whatsapp ?? ""} placeholder="Opcional" />
-        </Field>
       </div>
 
       {serverDuplicates?.length ? (
@@ -130,49 +134,54 @@ export function PreacherForm({ preacher, onDone }: { preacher?: PreacherRow; onD
         <DuplicateWarning matches={liveDuplicates} />
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Função" htmlFor="category" error={fieldError("category")}>
-          <SelectField id="category" name="category" options={categoryOptions} defaultValue={preacher?.category ?? "membro"} />
-        </Field>
-        <Field label="Cargo" htmlFor="role_title" error={fieldError("role_title")}>
-          <Input id="role_title" name="role_title" defaultValue={preacher?.role_title ?? ""} placeholder="Ex.: Pastor distrital, Líder de jovens" />
-        </Field>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Igreja de origem" htmlFor="home_church" error={fieldError("home_church")}>
-          <Input id="home_church" name="home_church" defaultValue={preacher?.home_church ?? ""} placeholder="Ex.: IASD Central" />
-        </Field>
-        <Field label="E-mail" htmlFor="email" error={fieldError("email")}>
-          <Input id="email" name="email" type="email" defaultValue={preacher?.email ?? ""} placeholder="Opcional" />
-        </Field>
-      </div>
-
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Dias de preferência</legend>
-        <div className="flex flex-wrap gap-1.5">
-          {WEEKDAYS.map((d) => (
-            <label
-              key={d.value}
-              className={cn(
-                "flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1 text-sm transition-colors",
-                "has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-accent has-[[data-state=checked]]:text-accent-foreground"
-              )}
-            >
-              <Checkbox
-                name="preferred_weekdays"
-                value={String(d.value)}
-                defaultChecked={preacher?.preferred_weekdays.includes(d.value)}
-                className="size-3.5"
-              />
-              {d.short}
-            </label>
-          ))}
+      <details className="group rounded-lg border border-border px-3 py-2 [&[open]]:pb-4">
+        <summary className="cursor-pointer text-sm font-medium text-muted-foreground select-none group-open:mb-3">
+          Mais informações (opcional)
+        </summary>
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Função" htmlFor="category" error={fieldError("category")}>
+              <SelectField id="category" name="category" options={categoryOptions} defaultValue={preacher?.category ?? "membro"} />
+            </Field>
+            <Field label="Cargo" htmlFor="role_title" error={fieldError("role_title")}>
+              <Input id="role_title" name="role_title" defaultValue={preacher?.role_title ?? ""} placeholder="Ex.: Pastor distrital" />
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="WhatsApp (se for outro número)" htmlFor="whatsapp" error={fieldError("whatsapp")}>
+              <Input id="whatsapp" name="whatsapp" type="tel" inputMode="tel" defaultValue={preacher?.whatsapp ?? ""} />
+            </Field>
+            <Field label="E-mail" htmlFor="email" error={fieldError("email")}>
+              <Input id="email" name="email" type="email" defaultValue={preacher?.email ?? ""} />
+            </Field>
+          </div>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">Dias de preferência</legend>
+            <div className="flex flex-wrap gap-1.5">
+              {WEEKDAYS.map((d) => (
+                <label
+                  key={d.value}
+                  className={cn(
+                    "flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1 text-sm transition-colors",
+                    "has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-accent has-[[data-state=checked]]:text-accent-foreground"
+                  )}
+                >
+                  <Checkbox
+                    name="preferred_weekdays"
+                    value={String(d.value)}
+                    defaultChecked={preacher?.preferred_weekdays.includes(d.value)}
+                    className="size-3.5"
+                  />
+                  {d.short}
+                </label>
+              ))}
+            </div>
+          </fieldset>
         </div>
-      </fieldset>
+      </details>
 
       <Field label="Observações gerais" htmlFor="notes" error={fieldError("notes")}>
-        <Textarea id="notes" name="notes" rows={3} defaultValue={preacher?.notes ?? ""} placeholder="Temas preferidos, restrições de agenda, deslocamento…" />
+        <Textarea id="notes" name="notes" rows={3} defaultValue={preacher?.notes ?? ""} placeholder="Ex.: só consegue a partir de janeiro; já pregou em novembro" />
       </Field>
 
       <div className="flex items-center gap-2">

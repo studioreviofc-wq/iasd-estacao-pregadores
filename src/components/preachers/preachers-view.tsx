@@ -45,6 +45,7 @@ import type { ActionState } from "@/lib/actions/state"
 import { formatDate } from "@/lib/domain/dates"
 import { preacherCategoryLabel, servicePeriodLabel } from "@/lib/domain/labels"
 import { formatBrPhone, normalizeName } from "@/lib/domain/phone"
+import { preacherDisplayName } from "@/lib/domain/preacher-name"
 import { availabilityLabel, daysSince, timeSince } from "@/lib/domain/preacher-stats"
 import type { PreacherOverviewRow } from "@/types/database"
 
@@ -121,7 +122,7 @@ export function PreachersView({
       if (last === "6m" && days !== null && days <= 182) return false
 
       if (!q && !qDigits) return true
-      const byName = q && normalizeName(`${p.full_name} ${p.home_church ?? ""}`).includes(q)
+      const byName = q && normalizeName(`${p.full_name} ${p.nickname ?? ""} ${p.home_church ?? ""}`).includes(q)
       const byPhone =
         qDigits.length >= 3 && [p.phone_normalized, digits(p.whatsapp ?? "")].some((n) => n?.includes(qDigits))
       return byName || byPhone
@@ -229,7 +230,7 @@ export function PreachersView({
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nome ou telefone"
+              placeholder="Buscar por nome, apelido, igreja ou telefone"
               className="h-9 bg-card pl-8"
               aria-label="Buscar pregadores por nome ou telefone"
             />
@@ -275,7 +276,7 @@ export function PreachersView({
         <EmptyState
           icon={Users}
           title="Nenhum pregador cadastrado"
-          description="Cadastre os pregadores com nome e telefone para montar a escala."
+          description="Cadastre os pregadores com nome, apelido e igreja — o telefone pode vir depois."
           className="bg-card"
           action={newButton}
         />
@@ -305,7 +306,7 @@ export function PreachersView({
                     <TableRow key={p.id} className={p.is_active ? undefined : "opacity-70"}>
                       <TableCell>
                         <Link href={`/pregadores/${p.id}`} className="font-medium hover:text-primary hover:underline">
-                          {p.full_name}
+                          {preacherDisplayName(p)}
                         </Link>
                         <span className="block text-xs text-muted-foreground">
                           {p.role_title ?? preacherCategoryLabel[p.category]}
@@ -314,7 +315,9 @@ export function PreachersView({
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <span className="tabular-nums">{p.phone ? formatBrPhone(p.phone) : "—"}</span>
+                          <span className={p.phone ? "tabular-nums" : "text-muted-foreground"}>
+                            {p.phone ? formatBrPhone(p.phone) : "Sem telefone"}
+                          </span>
                           <WhatsappButton preacher={p} context={whatsapp} />
                         </div>
                       </TableCell>
@@ -358,7 +361,7 @@ export function PreachersView({
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <Link href={`/pregadores/${p.id}`} className="block truncate font-medium hover:text-primary">
-                      {p.full_name}
+                      {preacherDisplayName(p)}
                     </Link>
                     <p className="text-sm text-muted-foreground tabular-nums">{p.phone ? formatBrPhone(p.phone) : "—"}</p>
                   </div>
@@ -396,7 +399,7 @@ export function PreachersView({
         open={dialog?.type === "form"}
         onOpenChange={(open) => !open && setDialog(null)}
         title={dialog?.type === "form" && dialog.preacher ? "Editar pregador" : "Novo pregador"}
-        description="Nome completo e telefone com DDD são obrigatórios."
+        description="Só o nome é obrigatório. Apelido, igreja e telefone ajudam na organização."
       >
         {dialog?.type === "form" ? <PreacherForm preacher={dialog.preacher} onDone={() => setDialog(null)} /> : null}
       </FormDialog>

@@ -57,7 +57,7 @@ export function ProfileActions({
         </>
       ) : null}
 
-      <FormDialog open={editing} onOpenChange={setEditing} title="Editar pregador" description="Nome completo e telefone com DDD são obrigatórios.">
+      <FormDialog open={editing} onOpenChange={setEditing} title="Editar pregador" description="Só o nome é obrigatório. Apelido, igreja e telefone ajudam na organização.">
         {editing ? <PreacherForm preacher={preacher} onDone={() => setEditing(false)} /> : null}
       </FormDialog>
 

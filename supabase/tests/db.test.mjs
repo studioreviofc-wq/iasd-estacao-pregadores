@@ -233,8 +233,12 @@ for (const [raw, want] of phones) {
   const got = (await db.query(`select normalize_br_phone($1) as n`, [raw])).rows[0].n
   check(got === want, `"${raw}" → ${got}`)
 }
-await expectFail(() => as(A, `insert into preachers (full_name) values ('Sem Telefone')`), "cadastro sem telefone bloqueado")
-await expectFail(() => as(A, `insert into preachers (full_name, phone) values ('Telefone Curto', '9999')`), "telefone inválido bloqueado")
+const onlyName = (await as(A, `insert into preachers (full_name, nickname, home_church) values ('Teté', 'Teté', 'Central') returning id, phone_normalized`)).rows[0]
+check(Boolean(onlyName.id) && onlyName.phone_normalized === null, "cadastro só com nome, apelido e igreja permitido (telefone opcional)")
+const nick = (await as(R, `select nickname from preacher_overview where id='${onlyName.id}'`)).rows[0]
+check(nick?.nickname === "Teté", "apelido disponível na visão consolidada")
+await as(A, `delete from preachers where id='${onlyName.id}'`)
+await expectFail(() => as(A, `insert into preachers (full_name, phone) values ('Telefone Curto', '9999')`), "telefone informado mas inválido continua bloqueado")
 const norm = (await db.query(`select phone_normalized from preachers where id='${p}'`)).rows[0].phone_normalized
 check(norm === "82999990001", `telefone salvo normalizado: ${norm}`)
 

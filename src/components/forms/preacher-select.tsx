@@ -2,6 +2,7 @@
 
 import type { PreacherOption } from "@/lib/data/preachers"
 import { preacherCategoryLabel } from "@/lib/domain/labels"
+import { preacherDisplayName } from "@/lib/domain/preacher-name"
 
 import { SelectField } from "./form-kit"
 
@@ -19,7 +20,7 @@ export function PreacherSelect({
 }) {
   const options = preachers
     .filter((p) => p.is_active || p.id === defaultValue)
-    .map((p) => ({ value: p.id, label: p.full_name, hint: `· ${preacherCategoryLabel[p.category]}` }))
+    .map((p) => ({ value: p.id, label: preacherDisplayName(p), hint: p.home_church ? `· ${p.home_church}` : `· ${preacherCategoryLabel[p.category]}` }))
   return (
     <SelectField
       id={id}
