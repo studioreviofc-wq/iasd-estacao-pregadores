@@ -27,6 +27,9 @@ export async function GET(request: NextRequest) {
     periodLabel: servicePeriodLabel[s.period],
     serviceType: s.service_type,
     serviceName: serviceName(s),
+    program: [s.service_type === "especial" ? serviceName(s) : s.title, s.notes && s.notes.length <= 60 ? s.notes : null]
+      .filter(Boolean)
+      .join(" · ") || null,
     preacher: s.preacher?.full_name ?? null,
     theme: s.sermon_title,
     status: s.status,

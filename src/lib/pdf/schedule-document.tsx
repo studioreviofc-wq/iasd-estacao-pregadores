@@ -65,6 +65,8 @@ export type SchedulePdfRow = {
   periodLabel: string
   serviceType: ServiceType
   serviceName: string
+  /** Programação ou observação do culto (ex.: Desbravadores, Todos na Central). */
+  program?: string | null
   preacher: string | null
   theme: string | null
   status: ServiceStatus
@@ -124,7 +126,7 @@ export function ScheduleDocument({ churchName, monthName, year, rows, generatedA
                 <Text style={[styles.cell, styles.cDay]}>{r.weekday}</Text>
                 <View style={[styles.cell, styles.cPeriod]}>
                   <Text>{r.periodLabel}</Text>
-                  {r.serviceType === "especial" ? <Text style={styles.sub}>{r.serviceName}</Text> : null}
+                  {r.program ? <Text style={styles.sub}>{r.program}</Text> : null}
                 </View>
                 <View style={[styles.cell, styles.cPreacher]}>
                   {r.status === "cancelado" ? (
